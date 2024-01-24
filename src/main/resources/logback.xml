@@ -1,0 +1,14 @@
+<configuration>
+	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+		<resetJUL>true</resetJUL>
+	</contextListener>
+
+	<appender name="json" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="cz.gov.data.logging.LogEncoder"/>
+	</appender>
+
+	<root level="INFO">
+		<appender-ref ref="json"/>
+	</root>
+
+</configuration>

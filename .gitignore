@@ -1,6 +1,10 @@
 # Build, tools, ...
 .*
-target/
-dist/
-data/
 *.iml
+/target/
+/dist/
+/data/
+
+#
+!.mvn/
+!.github
