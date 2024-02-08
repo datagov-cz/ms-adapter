@@ -1,7 +1,5 @@
 package cz.gov.data.ms.action;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.microsoft.graph.requests.GraphServiceClient;
 import cz.gov.data.ms.sharepoint.SharePointListToRdf;
 import cz.gov.data.ms.AzureAuthentication;
@@ -54,7 +52,6 @@ public class DownloadSharepointList{
                 .downloadList(siteIdentifier, listIdentifier);
 
         var customHandlers = new HashMap<String, SharePointListToRdf.Handler>();
-         customHandlers.put("Obr_x00e1_zek", createImageHandler());
 
         var statements = SharePointListToRdf
                 .toRdf(sharepointList, baseUrl, customHandlers);
@@ -63,18 +60,6 @@ public class DownloadSharepointList{
         } catch(IOException exception) {
             LOG.error("Failed to save list to '{}'.", outputPath, exception);
         }
-    }
-
-    protected SharePointListToRdf.Handler createImageHandler() {
-        return (valueFactory, value, target) -> {
-            if (value == null) {
-                target.set();
-                return;
-            }
-            JsonElement root = JsonParser.parseString(value.getAsString());
-            String file = root.getAsJsonObject().get("fileName").getAsString();
-            target.set(valueFactory.createLiteral(file));
-        };
     }
 
     protected void write(
