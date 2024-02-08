@@ -148,13 +148,13 @@ public class Sharepoint<R> {
             throws SharepointException {
         String driveIdentifier = findDriveByName(siteIdentifier, driveName);
         if (driveIdentifier == null) {
-            LOG.warn("Can't find drive with required name.");
+            LOG.warn("Can't find drive with required name '{}'.", driveName);
             return Collections.emptyList();
         }
         String directoryIdentifier = findDirectoryOnDrive(
                 siteIdentifier, driveIdentifier, directoryName);
         if (directoryIdentifier == null) {
-            LOG.warn("Can't find directory with required name.");
+            LOG.warn("Can't find directory with required name '{}'.", directoryName);
             return Collections.emptyList();
         }
         return listDriveDirectoryByIdentifier(
@@ -233,7 +233,7 @@ public class Sharepoint<R> {
         if (source == null) {
             LOG.error("Can't find file '{}' name '{}'.",
                     file.fileIdentifier, file.fileName);
-            throw new SharepointException("Can't file required file.");
+            throw new SharepointException("Can't open required file.");
         }
         Path destination = outputDirectory.resolve(file.fileName);
         try (var output = Files.newOutputStream(destination)) {
