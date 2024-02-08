@@ -17,8 +17,6 @@ public class EntryPoint {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntryPoint.class);
 
-    private static final String BASE_URL = "http://localhost/applications";
-
     protected AzureAuthentication authentication;
 
     protected String siteIdentifier;
@@ -46,16 +44,18 @@ public class EntryPoint {
         addCommonOptions(options);
         options.addRequiredOption(null, "list", true, "List identifier.");
         options.addRequiredOption(null, "output", true, "Output file.");
+        options.addRequiredOption(null, "base", true, "Base URL.");
         //
         CommandLine commandLine = parseCommandLine(options, args);
         loadCommonOptions(commandLine);
         //
         String list = commandLine.getOptionValue("list");
         Path output = Path.of(commandLine.getOptionValue("output"));
+        String baseUrl = commandLine.getOptionValue("base");
         //
         try {
             DownloadSharepointList.downloadContent(
-                    authentication, siteIdentifier, list, BASE_URL, output);
+                    authentication, siteIdentifier, list, baseUrl, output);
         } catch (Throwable t) {
             LOG.error("Failed to download SharePoint list.", t);
         }
