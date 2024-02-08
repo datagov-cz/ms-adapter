@@ -108,10 +108,7 @@ public class SharePointListToRdf {
     }
 
     protected void prepareCellData(Cell cell) {
-        cellAnnotation.name = cell.column.label;
-        if ("".equals(cellAnnotation.name)) {
-            cellAnnotation.name = cell.column.name;
-        }
+        cellAnnotation.name = cell.column.name;
         // Custom handler.
         var handler = customHandlers.get(cell.column.label);
         if (handler != null) {
