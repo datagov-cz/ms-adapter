@@ -17,7 +17,7 @@ Argumenty:
 - `secret` - Nahrazuje hodnotu z `MS_SECRET`. Volitelný argument.
 - `site` - Identifikátor stránky, získání je popsáno v samosatné sekci.
 - `list` - Identifikátor seznamu, získání je popsáno v samosatné sekci.
-- `base` - Base URL pro predikáty.
+- `base` - Predikáty v seznamu jsou tvořeny jako `{base}#{jméno-sloupce}`.
 - `output` - Cesta k souboru pro uložení obsahu seznamu ve formátu TriG.
 
 Příklad spuštění:

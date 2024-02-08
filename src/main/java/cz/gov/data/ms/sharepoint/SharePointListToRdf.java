@@ -108,9 +108,9 @@ public class SharePointListToRdf {
     }
 
     protected void prepareCellData(Cell cell) {
-        cellAnnotation.name = cell.column.name;
+        cellAnnotation.name = cell.column.label;
         // Custom handler.
-        var handler = customHandlers.get(cell.column.name);
+        var handler = customHandlers.get(cell.column.label);
         if (handler != null) {
             handler.handle(valueFactory, cell.value, cellValue);
             return;
