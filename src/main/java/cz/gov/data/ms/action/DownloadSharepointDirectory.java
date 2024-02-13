@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 public class DownloadSharepointDirectory {
@@ -24,8 +25,7 @@ public class DownloadSharepointDirectory {
     public static void downloadContent(
             AzureAuthentication authentication,
             String siteIdentifier,
-            String driveName,
-            String directoryName,
+            String path,
             Path outputPath) {
         var instance = new DownloadSharepointDirectory(
                 authentication, siteIdentifier);
@@ -34,7 +34,7 @@ public class DownloadSharepointDirectory {
         } catch (IOException ex) {
             LOG.error("Can not create target directory '{}'.", outputPath, ex);
         }
-        instance.downloadList(driveName, directoryName, outputPath);
+        instance.downloadList(path, outputPath);
     }
 
     public DownloadSharepointDirectory(
@@ -44,7 +44,7 @@ public class DownloadSharepointDirectory {
     }
 
     protected void downloadList(
-            String driveName, String directoryName, Path outputPath) {
+            String drivePath, Path outputPath) {
         var graphClient = GraphServiceClient
                 .builder()
                 .authenticationProvider(authentication.provider())
@@ -53,11 +53,9 @@ public class DownloadSharepointDirectory {
         List<SharepointFile> fileList;
 
         try {
-            fileList = sharepoint.listDriveDirectory(
-                    siteIdentifier, driveName, directoryName);
+            fileList = sharepoint.listDriveDirectory(siteIdentifier, drivePath);
         } catch (SharepointException ex) {
-            LOG.error("Can not list content of a directory '{}' drive '{}'",
-                    directoryName, driveName, ex);
+            LOG.error("Can not list content of '{}'.", drivePath, ex);
             return;
         }
 

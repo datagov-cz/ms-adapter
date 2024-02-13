@@ -18,7 +18,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class Sharepoint<R> {
@@ -144,17 +146,24 @@ public class Sharepoint<R> {
     }
 
     public List<SharepointFile> listDriveDirectory(
-            String siteIdentifier, String driveName, String directoryName)
+            String siteIdentifier, String drivePath)
             throws SharepointException {
+        List<String> path = Arrays.asList(drivePath.split("/"));
+        if (path.isEmpty()) {
+            LOG.warn("Path is empty");
+            return Collections.emptyList();
+        }
+        var pathIterator = path.iterator();
+        String driveName = pathIterator.next();
         String driveIdentifier = findDriveByName(siteIdentifier, driveName);
         if (driveIdentifier == null) {
             LOG.warn("Can't find drive with required name '{}'.", driveName);
             return Collections.emptyList();
         }
         String directoryIdentifier = findDirectoryOnDrive(
-                siteIdentifier, driveIdentifier, directoryName);
+                siteIdentifier, driveIdentifier, pathIterator);
         if (directoryIdentifier == null) {
-            LOG.warn("Can't find directory with required name '{}'.", directoryName);
+            LOG.warn("Directory not found.");
             return Collections.emptyList();
         }
         return listDriveDirectoryByIdentifier(
@@ -182,24 +191,43 @@ public class Sharepoint<R> {
 
     protected String findDirectoryOnDrive(
             String siteIdentifier, String driveIdentifier,
-            String directoryName) throws SharepointException {
-        var rootItems = graphServiceClient
+            Iterator<String> pathIterator) throws SharepointException {
+        var driveBuilder = graphServiceClient
                 .sites(siteIdentifier)
-                .drives(driveIdentifier)
+                .drives(driveIdentifier);
+        var directoryItems = driveBuilder
                 .root()
                 .children()
                 .buildRequest()
                 .get();
-        if (rootItems == null) {
-            throw new SharepointException("Can't list drive content!");
-        }
-        var rootItemsPage = rootItems.getCurrentPage();
-        for (DriveItem driveItem : rootItemsPage) {
-            if (directoryName.equals(driveItem.name)) {
-                return driveItem.id;
+        StringBuilder visitedPath = new StringBuilder();
+        String resultIdentifier = null;
+        while (pathIterator.hasNext()) {
+            String nextName = pathIterator.next();
+            if (directoryItems == null) {
+                throw new SharepointException("Can't list drive content!");
             }
+            String nextIdentifier = null;
+            for (DriveItem driveItem : directoryItems.getCurrentPage()) {
+                if (nextName.equals(driveItem.name)) {
+                    nextIdentifier = driveItem.id;
+                    break;
+                }
+            }
+            if (nextIdentifier == null) {
+                LOG.info("Can't find '{}' in '{}'.", nextName, visitedPath);
+                return null;
+            }
+            // Move to next iteration.
+            visitedPath.append('/').append(nextName);
+            resultIdentifier = nextIdentifier;
+            directoryItems = driveBuilder
+                    .items(nextIdentifier)
+                    .children()
+                    .buildRequest()
+                    .get();
         }
-        return null;
+        return resultIdentifier;
     }
 
     protected List<SharepointFile> listDriveDirectoryByIdentifier(

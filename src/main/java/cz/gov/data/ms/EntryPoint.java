@@ -110,20 +110,20 @@ public class EntryPoint {
     public void runDownloadDirectory(String[] args) {
         Options options = new Options();
         addCommonOptions(options);
-        options.addRequiredOption(null, "drive", true, "Drive name.");
-        options.addRequiredOption(null, "directory", true, "Directory name.");
+        options.addRequiredOption(null, "path", true,
+                "Path starting with drive name, followed by directory names. " +
+                        "Use '/' as a separator.");
         options.addRequiredOption(null, "output", true, "Output directory.");
         //
         CommandLine commandLine = parseCommandLine(options, args);
         loadCommonOptions(commandLine);
         //
-        String drive = commandLine.getOptionValue("drive");
-        String directory = commandLine.getOptionValue("directory");
+        String path = commandLine.getOptionValue("path");
         Path output = Path.of(commandLine.getOptionValue("output"));
         //
         try {
             DownloadSharepointDirectory.downloadContent(
-                    authentication, siteIdentifier, drive, directory, output);
+                    authentication, siteIdentifier, path, output);
         } catch (Throwable t) {
             LOG.error("Failed to download SharePoint directory.", t);
         }

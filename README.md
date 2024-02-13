@@ -32,10 +32,7 @@ Argumenty:
 - `tenant` - Nahrazuje hodnotu z `MS_TENANT`. Volitelný argument.
 - `secret` - Nahrazuje hodnotu z `MS_SECRET`. Volitelný argument.
 - `site` - Identifikátor stránky, získání je popsáno v samosatné sekci.
-- `drive` - Jméno knihovny.
-  Název "Knihovny dokumentů" v Obsahu webu. Doporučená hodnota "Dokumenty".
-- `directory` - Jméno adresáře v knihovně.
-  Název adresáře ve složce "Dokumenty".
+- `Path` - Název "Knihovny dokumentů" v "Obsahu webu" následovaný jmény adresářů. Znak `/` slouží jako oddělovač.
 - `output` - Cesta k adresáři kam uložit soubory.
 
 Příklad spuštění:
@@ -50,6 +47,7 @@ K získání identifikátoru stránky je možné použít náseldující dotaz:
 ```
 https://graph.microsoft.com/v1.0/sites?$select=id&search={název stránky}
 ```
+Poduk je odpovědí `403` je třeba udělit oprávnění `Sites.Read.All` v záložce `Modify permissions`.
 
 K ziskání identifikátoru seznamu je možné otevřít nejprve seznam v prohlížeči.
 Dále pak v sekci nastavení, tlačítko kolečka vpravo nahoře, je možné se navigovat na "Nastavení seznamu".
