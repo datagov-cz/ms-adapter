@@ -1,14 +1,12 @@
 package cz.gov.data.ms.sharepoint;
 
-import com.google.gson.JsonElement;
-
 public class Cell {
 
     public final Column column;
 
-    public final JsonElement value;
+    public final Object value;
 
-    public Cell(Column column, JsonElement value) {
+    public Cell(Column column, Object value) {
         this.column = column;
         this.value = value;
     }

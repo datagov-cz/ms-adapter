@@ -1,6 +1,5 @@
 package cz.gov.data.ms.action;
 
-import com.microsoft.graph.requests.GraphServiceClient;
 import cz.gov.data.ms.sharepoint.SharePointListToRdf;
 import cz.gov.data.ms.AzureAuthentication;
 import cz.gov.data.ms.sharepoint.Sharepoint;
@@ -44,17 +43,9 @@ public class DownloadSharepointList{
             String listIdentifier,
             String baseUrl,
             Path outputPath) {
-        var graphClient = GraphServiceClient
-                .builder()
-                .authenticationProvider(authentication.provider())
-                .buildClient();
-        var sharepointList = new Sharepoint<>(graphClient)
+        var sharepointList = new Sharepoint(authentication.graphClient())
                 .downloadList(siteIdentifier, listIdentifier);
-
-        var customHandlers = new HashMap<String, SharePointListToRdf.Handler>();
-
-        var statements = SharePointListToRdf
-                .toRdf(sharepointList, baseUrl, customHandlers);
+        var statements = SharePointListToRdf.toRdf(sharepointList, baseUrl);
         try {
             write(statements, outputPath);
         } catch(IOException exception) {

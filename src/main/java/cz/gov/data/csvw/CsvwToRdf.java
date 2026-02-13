@@ -5,6 +5,8 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
+import java.util.Collection;
+
 /**
  * <a href="https://www.w3.org/TR/2015/REC-csv2rdf-20151217/">csv2rdf</a>
  */
@@ -178,7 +180,7 @@ public class CsvwToRdf {
         defaultCell = valueFactory.createBNode();
     }
 
-    public void onCell(CellAnnotation annotation, CellValue value) {
+    public void onCell(CellAnnotation annotation, Collection<Value> values) {
         // 4.6.8 ... For each cell in the current row where the suppress output
         // annotation for the column associated with that cell is false:
 
@@ -221,25 +223,22 @@ public class CsvwToRdf {
         // emit the triples defining list V_list plus the following triple:
         // TODO
 
-        if (value.isList()) {
-            // 4.6.8.6 Else, if the cell value is a list, then the cell value
-            // provides an unordered sequence of literal nodes for inclusion
-            // within the RDF output, each of which is related to the subject
-            // using the predicate P. For each value provided in the sequence,
-            // add a literal node V_literal; emit the following triple:
-            for (Value item : value.getValues()) {
-                collector.add(cell, predicate, item);
-            }
-        } else if (value.getValue() != null) {
-            // 4.6.8.7 Else, if the cell value is not null, then the cell value
-            // provides a single literal node V_literal for inclusion within the
-            // RDF output that is related the current subject using the
-            // predicate P; emit the following triple:
-            //
-            // The literal nodes derived from the cell values must be expressed
-            // according to the cell value's datatype as defined below:
-            // Interpreting datatypes.
-            collector.add(cell, predicate, value.getValue());
+        // 4.6.8.6 Else, if the cell value is a list, then the cell value
+        // provides an unordered sequence of literal nodes for inclusion
+        // within the RDF output, each of which is related to the subject
+        // using the predicate P. For each value provided in the sequence,
+        // add a literal node V_literal; emit the following triple:
+
+        // 4.6.8.7 Else, if the cell value is not null, then the cell value
+        // provides a single literal node V_literal for inclusion within the
+        // RDF output that is related the current subject using the
+        // predicate P; emit the following triple:
+        //
+        // The literal nodes derived from the cell values must be expressed
+        // according to the cell value's datatype as defined below:
+        // Interpreting datatypes.
+        for (Value item : values) {
+            collector.add(cell, predicate, item);
         }
     }
 

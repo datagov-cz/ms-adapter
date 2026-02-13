@@ -1,8 +1,6 @@
 package cz.gov.data.ms.sharepoint;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+import com.microsoft.kiota.serialization.*;
 import cz.gov.data.csvw.CellAnnotation;
 import cz.gov.data.csvw.CellValue;
 import cz.gov.data.csvw.CsvwToRdf;
@@ -16,15 +14,8 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class SharePointListToRdf {
-
-    public interface Handler {
-
-        void handle(ValueFactory valueFactory, JsonElement value, ValueHolder target);
-
-    }
 
     public static class ValueHolder implements CellValue {
 
@@ -66,31 +57,18 @@ public class SharePointListToRdf {
 
     protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
-    protected final CellAnnotation cellAnnotation = CellAnnotation.empty();
-
-    protected final ValueHolder cellValue = new ValueHolder();
-
     protected StatementsBuilder collector;
 
-    protected Map<String, Handler> customHandlers;
-
-    public static List<Statement> toRdf(
-            SharepointList list,
-            String url,
-            Map<String, Handler> customHandlers) {
+    public static List<Statement> toRdf(SharepointList list, String url) {
         int expectedSize = (list.columns.size() + 3) * list.rows.size();
         var result = new ArrayList<Statement>(expectedSize);
         var collector = new StatementsBuilder(result);
-        (new SharePointListToRdf(collector, customHandlers))
-                .listToRdf(list, url);
+        (new SharePointListToRdf(collector)).listToRdf(list, url);
         return result;
     }
 
-    public SharePointListToRdf(
-            StatementsBuilder collector,
-            Map<String, Handler> customHandlers) {
+    public SharePointListToRdf(StatementsBuilder collector) {
         this.collector = collector;
-        this.customHandlers = customHandlers;
     }
 
     protected void listToRdf(SharepointList list, String url) {
@@ -98,67 +76,71 @@ public class SharePointListToRdf {
         var annotation = TableAnnotation.empty();
         annotation.url = url;
         adapter.onTable(null, annotation);
+        // To not recreate every time we keep the values here.
+        var cellValues = new ArrayList<Value>();
+        var cellAnnotation = CellAnnotation.empty();
+        //
         for (Row row : list.rows) {
             adapter.onRow(null);
             for (Cell cell : row.cells) {
-                prepareCellData(cell);
-                adapter.onCell(cellAnnotation, cellValue);
+                // Prepare metadata
+                cellAnnotation.name = cell.column.name;
+                // Prepare value
+                cellValues.clear();
+                prepareCellValue(cell, cellValues);
+                adapter.onCell(cellAnnotation, cellValues);
             }
         }
     }
 
-    protected void prepareCellData(Cell cell) {
-        cellAnnotation.name = cell.column.name;
-        // Custom handler.
-        var handler = customHandlers.get(cell.column.label);
-        if (handler != null) {
-            handler.handle(valueFactory, cell.value, cellValue);
+    protected void prepareCellValue(Cell cell, Collection<Value> values) {
+        // Try to process as a primitive value.
+        if (processPrimitiveValue(cell.value, values)) {
+            return;
+        } else if (cell.value instanceof UntypedArray typed) {
+            Iterable<UntypedNode> items = typed.getValue();
+            for (UntypedNode item : items) {
+                if (processPrimitiveValue(item, values)) {
+                    continue;
+                }
+                throw new UnsupportedOperationException("Unknown type :'" + item.getClass().getName() + "'.");
+            }
             return;
         }
-        //
-        JsonElement element = cell.value;
-        if (element == null || element.isJsonNull()) {
-            cellValue.set();
-        } else if (element.isJsonPrimitive()) {
-            var value = jsonToRdf(element.getAsJsonPrimitive());
-            cellValue.set(value);
-        } else if (element.isJsonArray()) {
-            JsonArray array = element.getAsJsonArray();
-            var value = new ArrayList<Value>(array.size());
-            for (JsonElement item : array) {
-                value.add(jsonToRdf(item));
+        throw new UnsupportedOperationException("Unknown type :'" + cell.value.getClass().getName() + "'.");
+    }
+
+    protected boolean processPrimitiveValue(Object value, Collection<Value> values) {
+        switch (value) {
+            case null -> {
+                // Do nothing.
             }
-            cellValue.set(value);
-        } else if (element.isJsonObject()) {
-            throw new UnsupportedOperationException(
-                    "Can not convert JSON object.");
+            case String typed -> {
+                values.add(valueFactory.createLiteral(typed));
+            }
+            case Boolean typed -> {
+                values.add(valueFactory.createLiteral(typed));
+            }
+            case UntypedString typed -> {
+                values.add(valueFactory.createLiteral(typed.getValue()));
+            }
+            case UntypedBoolean typed -> {
+                values.add(valueFactory.createLiteral(typed.getValue()));
+            }
+            case UntypedInteger typed -> {
+                values.add(valueFactory.createLiteral(typed.getValue()));
+            }
+            case UntypedDouble typed -> {
+                values.add(valueFactory.createLiteral(typed.getValue()));
+            }
+            case UntypedNull untypedNull -> {
+                // Do nothing.
+            }
+            default -> {
+                return false;
+            }
         }
-    }
-
-    protected Value jsonToRdf(JsonElement value) {
-        if (value == null || value.isJsonNull()) {
-            return null;
-        } else if (value.isJsonPrimitive()) {
-            return jsonToRdf(value.getAsJsonPrimitive());
-        } else if (value.isJsonArray()) {
-            throw new UnsupportedOperationException(
-                    "Can not convert JSON array.");
-        } else if (value.isJsonObject()) {
-            throw new UnsupportedOperationException(
-                    "Can not convert JSON object.");
-        } else {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    protected Value jsonToRdf(JsonPrimitive value) {
-        if (value.isNumber()) {
-            return valueFactory.createLiteral(value.getAsInt());
-        } else if (value.isBoolean()) {
-            return valueFactory.createLiteral(value.getAsBoolean());
-        } else {
-            return valueFactory.createLiteral(value.getAsString());
-        }
+        return true;
     }
 
 }

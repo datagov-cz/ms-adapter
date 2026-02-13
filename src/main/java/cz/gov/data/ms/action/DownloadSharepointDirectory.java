@@ -1,6 +1,5 @@
 package cz.gov.data.ms.action;
 
-import com.microsoft.graph.requests.GraphServiceClient;
 import cz.gov.data.ms.AzureAuthentication;
 import cz.gov.data.ms.sharepoint.SharepointFile;
 import cz.gov.data.ms.sharepoint.Sharepoint;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 public class DownloadSharepointDirectory {
@@ -45,11 +43,7 @@ public class DownloadSharepointDirectory {
 
     protected void downloadList(
             String drivePath, Path outputPath) {
-        var graphClient = GraphServiceClient
-                .builder()
-                .authenticationProvider(authentication.provider())
-                .buildClient();
-        var sharepoint = new Sharepoint<>(graphClient);
+        var sharepoint = new Sharepoint(authentication.graphClient());
         List<SharepointFile> fileList;
 
         try {
